@@ -169,18 +169,18 @@ namespace SudokuSolver.Logic
             //                         .SelectMany(s => s)
             //                         .Where(s => s.Value is null)
             //                         .ToArray();
-            var nonPossibles = puzzle.AllSquares
+            Dictionary<Square, HashSet<int>> nonPossibles = puzzle.AllSquares
                                      .SelectMany(s => s)
-                                     .Where(s => s.Value is null).ToDictionary(s => s, s => new HashSet<int>());
+                                     .Where(s => s.Value is null)
+                                     .ToDictionary(s => s, s => new HashSet<int>());
 
             foreach (var square in updatedSqures)
             {
-
                 var surrounding = puzzle.Rows[square.Row]
                                         .Union(puzzle.Columns[square.Column])
                                         .Union(puzzle.Regions[square.Region])
-                                        .Where(s => s != square)
                                         .Distinct()
+                                        .Where(s => nonPossibles.ContainsKey(s) && s != square)
                                         .Select(s => nonPossibles[s])
                                         .ToArray();
 
@@ -217,7 +217,7 @@ namespace SudokuSolver.Logic
                                 puzzle.Columns[square.Column],
                                 puzzle.Regions[square.Region]
                             }
-                            .Select(r => r.Where(s => s != square).Select(s => nonPossibles[s]))
+                            .Select(r => r.Where(s => nonPossibles.ContainsKey(s) && s != square).Select(s => nonPossibles[s]))
                             .ToArray();
 
                 for (int i = 1; i < 10; i++)

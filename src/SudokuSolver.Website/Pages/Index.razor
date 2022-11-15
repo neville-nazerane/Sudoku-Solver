@@ -1,18 +1,22 @@
 ﻿@page "/"
 
 
-
-@foreach (var row in puzzle.AllSquares){
+<center>
 
     <div class="mt-4">
-
-        @foreach (var sq in row)
+        @foreach (var row in puzzle.AllSquares)
         {
-            <span class="ml-4">
-                <input />
-            </span>
-        }
 
+            <div @onkeyup=TriggerKeypress>
+
+                @foreach (var sq in row)
+                {
+                    <button type="button" class="input-button btn @(GetInputClass(sq))" @onclick=@(() => Select(sq))>@sq.Value</button>
+                }
+
+            </div>
+        }
     </div>
 
-}
+    <button type="button" class="mt-4 btn btn-primary btn-lg" @onclick=Solve>Solve</button>
+</center>
