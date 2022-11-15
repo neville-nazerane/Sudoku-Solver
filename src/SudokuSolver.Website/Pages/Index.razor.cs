@@ -35,13 +35,11 @@ namespace SudokuSolver.Website.Pages
 
         void Select(Square sq)
         {
-            Console.WriteLine("selected!");
             selection = sq;
         }
 
         void TriggerKeypress(KeyboardEventArgs e)
         {
-            Console.WriteLine(e.Key);
             if (selection is not null && int.TryParse(e.Key, out int val) && val > 0 && val < 10)
             {
                 selection.Value = val;
