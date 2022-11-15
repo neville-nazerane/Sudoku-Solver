@@ -222,9 +222,9 @@ namespace SudokuSolver.Logic
 
                 for (int i = 1; i < 10; i++)
                 {
-                    if (blocks.Any(b => b.All(p => p.Contains(i))))
+                    if (blocks.Any(b => b.All(p => p.Contains(i))) && !nonPossibles[square].Contains(i))
                     {
-                        //square.Value = i;
+                        square.Value = i;
                         changed.Add(square);
                         break;
                     }
