@@ -9,6 +9,8 @@ namespace SudokuSolver.Logic.Model
     public class Square
     {
 
+        //public string Id => $"{Row},{Column},{Region}";
+
         public int? Value { get; set; }
 
         required public int Column { get; init; }
@@ -18,11 +20,15 @@ namespace SudokuSolver.Logic.Model
         required public int Row { get; init; }
 
         public bool IsEnforced { get; set; }
+        public bool IsBroken { get; internal set; }
 
         internal Square()
         {
 
         }
+
+        //public override bool Equals(object? obj) => obj is Square sq && Id == sq.Id;
+
 
     }
 }

@@ -1,6 +1,7 @@
 ﻿using SudokuSolver.Logic.Model;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -142,6 +143,94 @@ namespace SudokuSolver.Logic
             }
             var list = (List<Square>)items;
             list.Add(square);
+        }
+
+        public static void Compute(Puzzle puzzle)
+        {
+            var updatedSq = puzzle.AllSquares
+                                  .SelectMany(s => s)
+                                  .Distinct()
+                                  .Where(s => s.Value.HasValue)
+                                  .ToArray()
+                                  .AsEnumerable();
+
+            while (updatedSq.Any())
+                updatedSq = Compute(puzzle, updatedSq);
+                
+        }
+        
+        private static IEnumerable<Square> Compute(Puzzle puzzle, IEnumerable<Square> updatedSqures)
+        {
+            var changed = new HashSet<Square>();
+
+            //var unfilledSquares = puzzle.AllSquares
+            //                         .SelectMany(s => s)
+            //                         .Where(s => s.Value is null)
+            //                         .ToArray();
+            var nonPossibles = puzzle.AllSquares
+                                     .SelectMany(s => s)
+                                     .Where(s => s.Value is null).ToDictionary(s => s, s => new HashSet<int>());
+
+            foreach (var square in updatedSqures)
+            {
+
+                var surrounding = puzzle.Rows[square.Row]
+                                        .Union(puzzle.Columns[square.Column])
+                                        .Union(puzzle.Regions[square.Region])
+                                        .Where(s => s != square)
+                                        .Distinct()
+                                        .Select(s => nonPossibles[s])
+                                        .ToArray();
+
+                foreach (var nonPoss in surrounding)
+                    if (square.Value.HasValue)
+                        nonPoss.Add(square.Value.Value);
+            }
+
+            foreach (var nonPoss in nonPossibles)
+            {
+
+                switch (nonPoss.Value.Count)
+                {
+                    case 8:
+                        nonPoss.Key.Value = 45 - nonPoss.Value.Sum();
+                        changed.Add(nonPoss.Key);
+                        break;
+                    case > 8:
+                        nonPoss.Key.IsBroken = true;
+                        break;
+                }
+
+            }
+
+            var unfilledSquares = nonPossibles.Keys
+                                          .Where(s => s.Value is null)
+                                          .ToArray();
+
+            foreach (var square in unfilledSquares)
+            {
+                var blocks = new[]
+                            {
+                                puzzle.Rows[square.Row],
+                                puzzle.Columns[square.Column],
+                                puzzle.Regions[square.Region]
+                            }
+                            .Select(r => r.Where(s => s != square).Select(s => nonPossibles[s]))
+                            .ToArray();
+
+                for (int i = 1; i < 10; i++)
+                {
+                    if (blocks.Any(b => b.All(p => p.Contains(i))))
+                    {
+                        square.Value = i;
+                        changed.Add(square);
+                        break;
+                    }
+                }
+            }
+
+            return changed;
+
         }
 
     }
