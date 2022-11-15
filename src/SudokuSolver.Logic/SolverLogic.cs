@@ -17,6 +17,8 @@ namespace SudokuSolver.Logic
             { "0,1", 0 },
             { "0,2", 0 },
             { "1,0", 0 },
+            { "1,1", 0 },
+            { "1,2", 0 },
             { "2,0", 0 },
             { "2,1", 0 },
             { "2,2", 0 },
@@ -109,11 +111,11 @@ namespace SudokuSolver.Logic
             var squares = new List<List<Square>>();
             var result = new Puzzle() { AllSquares = squares };
 
-            for (int column = 0; column < 9; column++)
+            for (int row = 0; row < 9; row++)
             {
                 var list = new List<Square>();
                 squares.Add(list);
-                for (int row = 0; row < 9; row++)
+                for (int column = 0; column < 9; column++)
                 {
                     int region = RegionMappings[$"{row},{column}"];
 

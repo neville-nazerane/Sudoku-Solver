@@ -1,3 +1,18 @@
 ﻿@page "/"
 
-<h1>Hii, world!</h1>
+
+
+@foreach (var row in puzzle.AllSquares){
+
+    <div class="mt-4">
+
+        @foreach (var sq in row)
+        {
+            <span class="ml-4">
+                <input />
+            </span>
+        }
+
+    </div>
+
+}
