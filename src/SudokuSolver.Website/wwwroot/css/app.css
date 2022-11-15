@@ -5,8 +5,10 @@
 
 .input-button {
     padding: 0 !important;
-    height: 50px;
-    width: 50px;
+    height: 100px;
+    width: 100px;
+    font-size: 50px !important;
+    font-weight: bold !important;
 }
 
 

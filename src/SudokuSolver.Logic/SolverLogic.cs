@@ -224,7 +224,7 @@ namespace SudokuSolver.Logic
                 {
                     if (blocks.Any(b => b.All(p => p.Contains(i))))
                     {
-                        square.Value = i;
+                        //square.Value = i;
                         changed.Add(square);
                         break;
                     }
