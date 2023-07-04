@@ -1,4 +1,5 @@
 ﻿using SudokuSolver.Logic.Model;
+using SudokuSolver.Logic.Utility;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
@@ -149,91 +150,87 @@ namespace SudokuSolver.Logic
 
         public static void Compute(Puzzle puzzle)
         {
-            var updatedSq = puzzle.AllSquares
-                                  .SelectMany(s => s)
-                                  .Distinct()
-                                  .Where(s => s.Value.HasValue)
-                                  .ToArray()
-                                  .AsEnumerable();
-
-            while (updatedSq.Any())
-                updatedSq = Compute(puzzle, updatedSq);
-                
-        }
-        
-        private static IEnumerable<Square> Compute(Puzzle puzzle, IEnumerable<Square> updatedSqures)
-        {
-            var changed = new HashSet<Square>();
-
-            //var unfilledSquares = puzzle.AllSquares
-            //                         .SelectMany(s => s)
-            //                         .Where(s => s.Value is null)
-            //                         .ToArray();
-            Dictionary<Square, HashSet<int>> nonPossibles = puzzle.AllSquares
-                                     .SelectMany(s => s)
-                                     .Where(s => s.Value is null)
-                                     .ToDictionary(s => s, s => new HashSet<int>());
-
-            foreach (var square in updatedSqures)
+            // clean up all inputs not entered by user
+            foreach (var square in puzzle.AllSquares.GetAllUnique())
             {
-                var surrounding = puzzle.Rows[square.Row]
-                                        .Union(puzzle.Columns[square.Column])
-                                        .Union(puzzle.Regions[square.Region])
-                                        .Distinct()
-                                        .Where(s => nonPossibles.ContainsKey(s) && s != square)
-                                        .Select(s => nonPossibles[s])
-                                        .ToArray();
-
-                foreach (var nonPoss in surrounding)
-                    if (square.Value.HasValue)
-                        nonPoss.Add(square.Value.Value);
+                if (!square.IsUserEntered)
+                    square.Value = null;
             }
 
-            foreach (var nonPoss in nonPossibles)
-            {
+            while (SingleSolve(puzzle)) ;
+        }
 
-                switch (nonPoss.Value.Count)
+        public static bool SingleSolve(Puzzle puzzle)
+        {
+            var emptySquares = puzzle.AllSquares.GetAllUniqueEmpty();
+
+            if (emptySquares.Any())
+            {
+                var filledSquares = puzzle.AllSquares.GetAllUniqueFilled();
+
+                var squareToNonPossMapping = puzzle.AllSquares
+                                                   .GetAllUnique()
+                                                   .ToDictionary(s => s, s => s.Value.HasValue ? CreateNonPossForAllExcept(s.Value.Value) : new());
+
+
+                // find non possibilities based on filled squares
+                foreach (var filled in filledSquares)
                 {
-                    case 8:
-                        nonPoss.Key.Value = 45 - nonPoss.Value.Sum();
-                        changed.Add(nonPoss.Key);
-                        break;
-                    case > 8:
-                        nonPoss.Key.IsBroken = true;
-                        break;
+                    var emptySurroundingSquares = emptySquares.GetAllSurroundingSquares(filled).GetAllUnique();
+                    foreach (var empty in emptySurroundingSquares)
+                        squareToNonPossMapping[empty].Add(filled.Value.Value);
                 }
 
-            }
-
-            var unfilledSquares = nonPossibles.Keys
-                                          .Where(s => s.Value is null)
-                                          .ToArray();
-
-            foreach (var square in unfilledSquares)
-            {
-                var blocks = new[]
-                            {
-                                puzzle.Rows[square.Row],
-                                puzzle.Columns[square.Column],
-                                puzzle.Regions[square.Region]
-                            }
-                            .Select(r => r.Where(s => nonPossibles.ContainsKey(s) && s != square).Select(s => nonPossibles[s]))
-                            .ToArray();
-
-                for (int i = 1; i < 10; i++)
+                // fill up empty squares based on non possibilities
+                foreach (var empty in emptySquares)
                 {
-                    if (blocks.Any(b => b.All(p => p.Contains(i))) && !nonPossibles[square].Contains(i))
+                    var nonPoss = squareToNonPossMapping[empty];
+                    switch (nonPoss.Count)
                     {
-                        square.Value = i;
-                        changed.Add(square);
-                        break;
+                        case 8:
+                            empty.Value = 45 - nonPoss.Sum();
+                            break;
+                        case > 8:
+                            break;
                     }
                 }
+
+                foreach (var empty in puzzle.AllSquares.GetAllUniqueEmpty())
+                {
+                    var surrounds = puzzle.AllSquares.GetAllUnique()
+                                                    .GetAllSurroundingSquares(empty);
+                    for (int i = 1; i < 10; i++)
+                    {
+                        if (surrounds.Any(s => s.Count(sq => squareToNonPossMapping[sq].Contains(i)) == 8))
+                        {
+                            empty.Value = i;
+                            break;
+                        }
+                    }
+                }
+
+                //// check up on squares still empty
+                //foreach (var empty in puzzle.AllSquares.GetAllUniqueEmpty())
+                //{
+                //    var filledSurround = puzzle.AllSquares.GetAllUniqueFilled()
+                //                                           .GetAllSurroundingSquares(empty)
+                //                                           .FirstOrDefault(s => s.Count() == 8);
+                //    if (filledSurround is not null)
+                //    {
+                //        empty.Value = 45 - filledSurround.Sum(s => s.Value.Value);
+                //    }
+                //}
+
+                return emptySquares.Count() != puzzle.AllSquares.GetAllUniqueEmpty().Count();
             }
 
-            return changed;
-
+            return false;
         }
+
+        private static HashSet<int> CreateNonPossForAllExcept(int exception)
+            => Enumerable.Range(1, 9)
+                         .Where(i => i != exception)
+                         .ToHashSet();
 
     }
 }

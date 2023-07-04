@@ -43,6 +43,7 @@ namespace SudokuSolver.Website.Pages
             if (selection is not null && int.TryParse(e.Key, out int val) && val > 0 && val < 10)
             {
                 selection.Value = val;
+                selection.IsUserEntered = true;
             }
         }
 
