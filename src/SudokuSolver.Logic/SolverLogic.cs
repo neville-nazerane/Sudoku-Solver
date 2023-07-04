@@ -209,18 +209,6 @@ namespace SudokuSolver.Logic
                     }
                 }
 
-                //// check up on squares still empty
-                //foreach (var empty in puzzle.AllSquares.GetAllUniqueEmpty())
-                //{
-                //    var filledSurround = puzzle.AllSquares.GetAllUniqueFilled()
-                //                                           .GetAllSurroundingSquares(empty)
-                //                                           .FirstOrDefault(s => s.Count() == 8);
-                //    if (filledSurround is not null)
-                //    {
-                //        empty.Value = 45 - filledSurround.Sum(s => s.Value.Value);
-                //    }
-                //}
-
                 return emptySquares.Count() != puzzle.AllSquares.GetAllUniqueEmpty().Count();
             }
 
