@@ -19,7 +19,7 @@ namespace SudokuSolver.Logic.Model
 
         required public int Row { get; init; }
 
-        public bool IsEnforced { get; set; }
+        public bool IsUserEntered { get; set; }
         public bool IsBroken { get; internal set; }
 
         internal Square()
