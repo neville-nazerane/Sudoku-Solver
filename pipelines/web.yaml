@@ -1,0 +1,81 @@
+
+pool: hosted-linux
+
+pr: none
+
+trigger:
+  branches:
+    include:
+      - master
+  paths:
+    include:
+      - src
+      - pipelines/web.yaml
+
+            
+
+parameters:
+
+- name: projectPath
+  type: string
+  default: src/SudokuSolver.Website
+
+- name: projectName
+  type: string
+  default: SudokuSolver.Website
+
+- name: destDirectory
+  type: string 
+  default: /var/www/sudoku
+
+stages:
+  - stage: CI
+    jobs:
+      - job: Compile
+        steps:
+
+        - script: |
+            dotnet publish ${{ parameters.projectPath }} -c release -o published
+            mkdir -p compressed
+            tar -czf compressed/${{ parameters.projectName }}.tar.gz -C published .
+          displayName: Publishing web app
+
+        - publish: compressed
+          displayName: Publish for release
+          artifact: published
+
+  - stage: Deploy
+    displayName: Deploy to VM
+
+    jobs:
+      - deployment: Deployment
+        displayName: Deploy to Development VM
+        environment:
+          name: Development
+          resourceType: VirtualMachine
+          resourceName: Web Server
+        strategy:
+          runOnce:
+            deploy:
+              steps:
+                
+                - checkout: none
+
+                - download: current
+                  displayName: download published artifact
+                  artifact: published
+
+                - script: |
+                    sudo rm -rf ${{ parameters.destDirectory }}
+                    sudo mkdir -p ${{ parameters.destDirectory }}
+                    sudo tar -xzf ${{ parameters.projectName }}.tar.gz -C ${{ parameters.destDirectory }}
+
+                    rm -rf *
+                  displayName: Updating website
+                  workingDirectory: $(Pipeline.Workspace)/published
+                  failOnStderr: true
+      
+                - task: DeleteFiles@1
+                  displayName: Clean up
+            
+    
